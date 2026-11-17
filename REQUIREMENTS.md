@@ -175,7 +175,7 @@ Image requirements:
 5. Implement P2-001 timestamp triggers.
 6. Implement P2-002 image-processing tests and resource safeguards.
 7. Run end-to-end tests across all five MCP tools.
-8. Review the complete diff and merge the feature implementation into `main) only after required checks pass.
+8. Review the complete diff and merge the feature implementation into `main` only after required checks pass.
 
 ## 6. End-to-end acceptance checklist
 
