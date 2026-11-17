@@ -71,7 +71,7 @@ Image requirements:
 - `save_post` rejects an invalid product reference, mismatched image URL/path, and missing Storage object.
 - No duplicate variable declarations or malformed escaped source lines remain.
 
-**Status:** In Progress — malformed `save_post` block repaired and committed to the feature branch; Deno type-check passes on the updated feature-branch commit. Edge Runtime and `save_post` integration tests remain pending.
+**Status:** In Progress — malformed `save_post` block repaired; validation extracted into a testable module. Deno type-check and 7 automated unit tests pass on the feature branch. Live Supabase/Edge Runtime integration tests remain pending.
 
 ### P-1 — P1-001: Add automated validation in CI
 
@@ -89,7 +89,7 @@ Image requirements:
 - A failed type-check or test produces a failed workflow.
 - No service-role key, bearer token, or other secret is committed.
 
-**Status:** In Progress — GitHub Actions workflow added on the feature branch; Deno type-check passed for the updated commit. Formatting checks and automated runtime/unit tests are not yet included.
+**Status:** In Progress — GitHub Actions runs on push and pull request; Deno type-check and 7 `save_post` unit tests pass. Formatting/lint checks and live Supabase integration tests are not yet included.
 
 ### P-1 — P1-002: Verify Storage prerequisites and deployment configuration
 
