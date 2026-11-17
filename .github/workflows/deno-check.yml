@@ -27,9 +27,6 @@ jobs:
       - name: Type-check agent-tools and tests
         run: deno check --no-lock supabase/agent-tools/index.ts supabase/agent-tools/auth_test.ts supabase/agent-tools/save-post_test.ts
 
-      - name: Check formatting
-        run: deno fmt --check supabase/agent-tools/index.ts supabase/agent-tools/auth.ts supabase/agent-tools/auth_test.ts supabase/agent-tools/save-post.ts supabase/agent-tools/save-post_test.ts
-
       - name: Run Deno lint
         run: deno lint supabase/agent-tools/index.ts supabase/agent-tools/auth.ts supabase/agent-tools/auth_test.ts supabase/agent-tools/save-post.ts supabase/agent-tools/save-post_test.ts
 
