@@ -25,7 +25,7 @@ jobs:
           deno-version: v2.x
 
       - name: Type-check agent-tools and tests
-        run: deno check --no-lock supabase/agent-tools/index.ts supabase/agent-tools/save-post_test.ts
+        run: deno check --no-lock supabase/agent-tools/index.ts supabase/agent-tools/auth_test.ts supabase/agent-tools/save-post_test.ts
 
       - name: Run save_post tests
-        run: deno test --no-check --no-lock supabase/agent-tools/save-post_test.ts
+        run: deno test --no-check --no-lock supabase/agent-tools/auth_test.ts supabase/agent-tools/save-post_test.ts
