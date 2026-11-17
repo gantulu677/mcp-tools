@@ -319,7 +319,7 @@ function createServer() {
     const { data: product, error: productError } = await admin.from("products")
       .select("id,product").eq("id", input.product_id).eq("is_active", true).single();
     if (productError || !product || product.product !== input.product) throw new Error("Product reference is invalid.");
-    const { data: row, error } = await admin.from("make_post").insert({
+    const { data: storedImage, error: storedImageError } = await admin.storage.from(OUTPUT_BUCKET).download(input.storage_path);\n    if (storedImageError || !storedImage) throw new Error("Final image object does not exist in Storage.");\n    const { data: row, error } = await admin.from("make_post").insert({
       product_id: input.product_id, product: input.product, headline: input.headline,
       subheadline: input.subheadline ?? null, features: input.features,
       composition: input.composition, layout: input.layout, background: input.background,
