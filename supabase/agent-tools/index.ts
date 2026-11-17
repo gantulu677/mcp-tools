@@ -5,6 +5,7 @@ import { WebStandardStreamableHTTPServerTransport } from "npm:@modelcontextproto
 import { Hono } from "npm:hono@4.9.7";
 import { cors } from "npm:hono@4.9.7/cors";
 import { z } from "npm:zod@4.1.13";
+import { savePost } from "./save-post.ts";
 import {
   ImageMagick,
   initializeImageMagick,
@@ -318,32 +319,32 @@ function createServer() {
     outputSchema: { success: z.boolean(), post: z.object({ id: z.string(), image_url: z.string(), status: z.string() }) },
     annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
   }, async (input) => {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    if (!supabaseUrl) throw new Error("SUPABASE_URL is not configured.");
-    const expectedUrl = adminClient().storage.from(OUTPUT_BUCKET).getPublicUrl(input.storage_path).data.publicUrl;
-    if (input.image_url !== expectedUrl || !input.storage_path.startsWith("chatgpt/") ||
-        !input.storage_path.endsWith(".png")) {
-      throw new Error("Image URL and storage path must refer to a finalized image in the image bucket.");
-    }
     const admin = adminClient();
-    const { data: product, error: productError } = await admin.from("products")
-      .select("id,product").eq("id", input.product_id).eq("is_active", true).single();
-    if (productError || !product || product.product !== input.product) throw new Error("Product reference is invalid.");
-    const { data: storedImage, error: storedImageError } = await admin.storage.from(OUTPUT_BUCKET).download(input.storage_path);
-    if (storedImageError || !storedImage) throw new Error("Final image object does not exist in Storage.");
-    const { data: row, error } = await admin.from("make_post").insert({
-      product_id: input.product_id, product: input.product, headline: input.headline,
-      subheadline: input.subheadline ?? null, features: input.features,
-      composition: input.composition, layout: input.layout, background: input.background,
-      quality: input.quality, prompt: input.prompt, image_url: input.image_url,
-      storage_bucket: OUTPUT_BUCKET, storage_path: input.storage_path,
-      mime_type: "image/png", image_width: OUTPUT_WIDTH, image_height: OUTPUT_HEIGHT,
-      status: "completed",
-    }).select("id,image_url,status").single();
-    if (error || !row) throw new Error("Post metadata could not be saved: " + (error?.message ?? "unknown error"));
+    const post = await savePost(input, {
+      getPublicUrl: (path) =>
+        admin.storage.from(OUTPUT_BUCKET).getPublicUrl(path).data.publicUrl,
+      findActiveProduct: async (id) => {
+        const { data, error } = await admin.from("products")
+          .select("id,product").eq("id", id).eq("is_active", true).single();
+        if (error || !data) return null;
+        return { id: data.id, product: data.product };
+      },
+      storageObjectExists: async (path) => {
+        const { data, error } = await admin.storage.from(OUTPUT_BUCKET).download(path);
+        return !error && !!data;
+      },
+      insertPost: async (values) => {
+        const { data, error } = await admin.from("make_post").insert(values)
+          .select("id,image_url,status").single();
+        if (error || !data) {
+          throw new Error("Post metadata could not be saved: " + (error?.message ?? "unknown error"));
+        }
+        return data;
+      },
+    });
     return {
-      structuredContent: { success: true, post: row },
-      content: [{ type: "text", text: "Post saved: " + row.id + " — " + row.image_url }],
+      structuredContent: { success: true, post },
+      content: [{ type: "text", text: "Post saved: " + post.id + " — " + post.image_url }],
     };
   });
 
