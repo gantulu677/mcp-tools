@@ -1,0 +1,28 @@
+name: Deno checks
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches:
+      - main
+      - feature/chatgpt-native-agent-tools
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Type-check Supabase Edge Function
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Type-check agent-tools
+        run: deno check --no-lock supabase/agent-tools/index.ts
