@@ -249,7 +249,7 @@ function createServer() {
     description: "Download a user-selected ChatGPT image attachment, validate it, composite the original apple/logo.png at the top-left, resize to 1080x1350, and upload the final PNG to the public image bucket. Returns image_url and storage_path. Do not use an external image-generation API.",
     inputSchema: {
       image: z.object({
-        download_url: z.string().url(), file_id: z.string().min(1),
+        download_url: z.string().url(),
         mime_type: z.string().optional(),
       }),
     },
@@ -258,6 +258,11 @@ function createServer() {
       mime_type: z.string(), width: z.number(), height: z.number(),
     },
     annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
+    _meta: {
+      "openai/fileParams": ["image"],
+      "openai/toolInvocation/invoking": "Menambahkan logo asli dan mengunggah gambar…",
+      "openai/toolInvocation/invoked": "Gambar final berhasil diproses.",
+    },
   }, async ({ image }) => {
     const admin = adminClient();
     const sourceBytes = await downloadImage(image.download_url, image.mime_type);
@@ -266,11 +271,15 @@ function createServer() {
     const logoBytes = new Uint8Array(await logoBlob.arrayBuffer());
 
     const finalBytes = ImageMagick.read(sourceBytes, (canvas) => {
+      const ratio = canvas.width / canvas.height;
+      if (Math.abs(ratio - (OUTPUT_WIDTH / OUTPUT_HEIGHT)) > 0.01) {
+        throw new Error("Generated image must use a 4:5 aspect ratio before finalization.");
+      }
       canvas.resize(OUTPUT_WIDTH, OUTPUT_HEIGHT);
       return ImageMagick.read(logoBytes, (logo) => {
-        if (logo.width > 240) {
-          const targetHeight = Math.max(1, Math.round(240 * logo.height / logo.width));
-          logo.resize(240, targetHeight);
+        if (logo.width > 120) {
+          const targetHeight = Math.max(1, Math.round(120 * logo.height / logo.width));
+          logo.resize(120, targetHeight);
         }
         canvas.composite(logo, Gravity.Northwest, 36, 36, CompositeOperator.Over);
         canvas.format = MagickFormat.Png;
@@ -319,7 +328,9 @@ function createServer() {
     const { data: product, error: productError } = await admin.from("products")
       .select("id,product").eq("id", input.product_id).eq("is_active", true).single();
     if (productError || !product || product.product !== input.product) throw new Error("Product reference is invalid.");
-    const { data: storedImage, error: storedImageError } = await admin.storage.from(OUTPUT_BUCKET).download(input.storage_path);\n    if (storedImageError || !storedImage) throw new Error("Final image object does not exist in Storage.");\n    const { data: row, error } = await admin.from("make_post").insert({
+    const { data: storedImage, error: storedImageError } = await admin.storage.from(OUTPUT_BUCKET).download(input.storage_path);\n    if (storedImageError || !storedImage) throw new Error("Final image object does not exist in Storage.");\n    const { data: storedImage, error: storedImageError } = await admin.storage.from(OUTPUT_BUCKET).download(input.storage_path);
+    if (storedImageError || !storedImage) throw new Error("Final image object does not exist in Storage.");
+    const { data: row, error } = await admin.from("make_post").insert({
       product_id: input.product_id, product: input.product, headline: input.headline,
       subheadline: input.subheadline ?? null, features: input.features,
       composition: input.composition, layout: input.layout, background: input.background,
