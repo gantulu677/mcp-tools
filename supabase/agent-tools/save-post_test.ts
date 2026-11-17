@@ -19,16 +19,19 @@ function dependencies(overrides: Partial<SavePostDependencies> = {}): SavePostDe
   return {
     getPublicUrl: (path) =>
       "https://example.supabase.co/storage/v1/object/public/image/" + path,
-    findActiveProduct: async (id) =>
-      id === validInput.product_id
-        ? { id, product: validInput.product }
-        : null,
-    storageObjectExists: async () => true,
-    insertPost: async () => ({
-      id: "22222222-2222-4222-8222-222222222222",
-      image_url: validInput.image_url,
-      status: "completed",
-    }),
+    findActiveProduct: (id) =>
+      Promise.resolve(
+        id === validInput.product_id
+          ? { id, product: validInput.product }
+          : null,
+      ),
+    storageObjectExists: () => Promise.resolve(true),
+    insertPost: () =>
+      Promise.resolve({
+        id: "22222222-2222-4222-8222-222222222222",
+        image_url: validInput.image_url,
+        status: "completed",
+      }),
     ...overrides,
   };
 }
@@ -49,13 +52,13 @@ async function rejectsWith(
 Deno.test("savePost persists a valid product and finalized image", async () => {
   let inserted: Record<string, unknown> | undefined;
   const result = await savePost(validInput, dependencies({
-    insertPost: async (values) => {
+    insertPost: (values) => {
       inserted = values;
-      return {
+      return Promise.resolve({
         id: "22222222-2222-4222-8222-222222222222",
         image_url: validInput.image_url,
         status: "completed",
-      };
+      });
     },
   }));
 
@@ -69,7 +72,7 @@ Deno.test("savePost persists a valid product and finalized image", async () => {
 
 Deno.test("savePost rejects an unknown or inactive product", async () => {
   await rejectsWith(
-    () => savePost(validInput, dependencies({ findActiveProduct: async () => null })),
+    () => savePost(validInput, dependencies({ findActiveProduct: () => Promise.resolve(null) })),
     "Product reference is invalid.",
   );
 });
@@ -97,7 +100,7 @@ Deno.test("savePost rejects paths outside the finalized image namespace", async 
 
 Deno.test("savePost rejects a missing Storage object", async () => {
   await rejectsWith(
-    () => savePost(validInput, dependencies({ storageObjectExists: async () => false })),
+    () => savePost(validInput, dependencies({ storageObjectExists: () => Promise.resolve(false) })),
     "Final image object does not exist in Storage.",
   );
 });
@@ -105,7 +108,7 @@ Deno.test("savePost rejects a missing Storage object", async () => {
 Deno.test("savePost propagates database insert failures", async () => {
   await rejectsWith(
     () => savePost(validInput, dependencies({
-      insertPost: async () => { throw new Error("database unavailable"); },
+      insertPost: () => Promise.reject(new Error("database unavailable")),
     })),
     "database unavailable",
   );
