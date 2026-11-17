@@ -11,6 +11,7 @@ import {
   MagickFormat,
   CompositeOperator,
   Gravity,
+  Point,
 } from "npm:@imagemagick/magick-wasm@0.0.36";
 
 const FUNCTION_NAME = "agent-tools";
@@ -281,7 +282,7 @@ function createServer() {
           const targetHeight = Math.max(1, Math.round(120 * logo.height / logo.width));
           logo.resize(120, targetHeight);
         }
-        canvas.composite(logo, Gravity.Northwest, 36, 36, CompositeOperator.Over);
+        canvas.composite(logo, CompositeOperator.Over, new Point(36, 36));
         canvas.format = MagickFormat.Png;
         return canvas.write((data) => data);
       });
