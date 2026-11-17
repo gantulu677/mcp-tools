@@ -71,7 +71,7 @@ Image requirements:
 - `save_post` rejects an invalid product reference, mismatched image URL/path, and missing Storage object.
 - No duplicate variable declarations or malformed escaped source lines remain.
 
-**Status:** Pending.
+**Status:** In Progress — source correction committed to the feature branch; Deno type-check and runtime tests are still pending.
 
 ### P-1 — P1-001: Add automated validation in CI
 
