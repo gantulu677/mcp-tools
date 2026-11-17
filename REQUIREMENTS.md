@@ -92,7 +92,7 @@ Image requirements:
 - Authenticated requests can invoke only the intended tools.
 - No privileged credential is returned to the caller or committed to source control.
 
-**Status:** In Progress — bearer-token validation has been extracted into `supabase/agent-tools/auth.ts`, with tests for missing, malformed, short-secret, incorrect, and valid credentials added on the feature branch. CI verification for these new tests is pending. Deployed version 6 remains unchanged and unauthenticated; no production invocation or deployment was performed.
+**Status:** In Progress — bearer-token validation is isolated in `supabase/agent-tools/auth.ts`; 6 tests cover missing, malformed, empty, short/missing configured secret, incorrect, and valid credentials. The latest CI passed all 6 auth tests. The HTTP middleware is not yet exercised end-to-end, and deployed version 6 remains unchanged and unauthenticated; no production invocation or deployment was performed.
 
 ### P-1 — P1-001: Add automated validation in CI
 
@@ -110,7 +110,7 @@ Image requirements:
 - A failed type-check or test produces a failed workflow.
 - No service-role key, bearer token, or other secret is committed.
 
-**Status:** In Progress — GitHub Actions runs on push and pull request. The existing run passed Deno type-check and 7 `save_post` tests; the workflow now also includes 6 bearer-token tests, but the updated run has not yet been confirmed. Formatting/lint checks and live Supabase integration tests are not yet included.
+**Status:** In Progress — latest GitHub Actions run passed Deno type-check, Deno lint, 6 bearer-token tests, and 7 `save_post` tests (13 total, 0 failures). A formatting check and live Supabase integration tests are not included.
 
 ### P-1 — P1-002: Verify Storage prerequisites and deployment configuration
 
