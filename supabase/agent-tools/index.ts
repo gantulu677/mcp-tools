@@ -6,6 +6,7 @@ import { Hono } from "npm:hono@4.9.7";
 import { cors } from "npm:hono@4.9.7/cors";
 import { z } from "npm:zod@4.1.13";
 import { savePost } from "./save-post.ts";
+import { isValidBearerToken } from "./auth.ts";
 import {
   ImageMagick,
   initializeImageMagick,
@@ -53,17 +54,6 @@ function adminClient() {
   return createClient(url, getSecretKey(), {
     auth: { persistSession: false, autoRefreshToken: false },
   });
-}
-
-async function sha256(value: string): Promise<Uint8Array> {
-  return new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value)));
-}
-
-async function constantTimeEqual(a: string, b: string): Promise<boolean> {
-  const [left, right] = await Promise.all([sha256(a), sha256(b)]);
-  let diff = 0;
-  for (let i = 0; i < left.length; i++) diff |= left[i] ^ right[i];
-  return diff === 0;
 }
 
 function validateDownloadUrl(raw: string): URL {
@@ -364,9 +354,7 @@ app.use("*", async (c, next) => {
   if (!expected || expected.length < 32) {
     return c.json({ error: "MCP authentication secret is not configured." }, 503);
   }
-  const header = c.req.header("Authorization") ?? "";
-  const supplied = header.startsWith("Bearer ") ? header.slice(7) : "";
-  if (!supplied || !(await constantTimeEqual(supplied, expected))) {
+  if (!await isValidBearerToken(c.req.header("Authorization"), expected)) {
     return c.json({ error: "Unauthorized" }, 401);
   }
   await next();
