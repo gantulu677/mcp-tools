@@ -2,7 +2,7 @@
 
 **Repository:** `gantulu677/mcp-tools`  
 **Document version:** 1.0  
-**Status:** Approved priorities — implementation pending  
+**Status:** Approved priorities — implementation in progress  
 **Approved scope:** Audit findings and remediation priorities  
 **Target branch for this document:** `main`
 
@@ -71,7 +71,7 @@ Image requirements:
 - `save_post` rejects an invalid product reference, mismatched image URL/path, and missing Storage object.
 - No duplicate variable declarations or malformed escaped source lines remain.
 
-**Status:** In Progress — source correction committed to the feature branch; Deno type-check and runtime tests are still pending.
+**Status:** In Progress — malformed `save_post` block repaired and committed to the feature branch; Deno type-check passes on the updated feature-branch commit. Edge Runtime and `save_post` integration tests remain pending.
 
 ### P-1 — P1-001: Add automated validation in CI
 
@@ -89,7 +89,7 @@ Image requirements:
 - A failed type-check or test produces a failed workflow.
 - No service-role key, bearer token, or other secret is committed.
 
-**Status:** Pending.
+**Status:** In Progress — GitHub Actions workflow added on the feature branch; Deno type-check passed for the updated commit. Formatting checks and automated runtime/unit tests are not yet included.
 
 ### P-1 — P1-002: Verify Storage prerequisites and deployment configuration
 
