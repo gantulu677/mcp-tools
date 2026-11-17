@@ -1,3 +1,4 @@
+// deno-lint-ignore no-unversioned-import -- Supabase Edge Runtime ambient types are provided by the platform.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { McpServer } from "npm:@modelcontextprotocol/sdk@1.25.3/server/mcp.js";
@@ -12,7 +13,6 @@ import {
   initializeImageMagick,
   MagickFormat,
   CompositeOperator,
-  Gravity,
   Point,
 } from "npm:@imagemagick/magick-wasm@0.0.36";
 
