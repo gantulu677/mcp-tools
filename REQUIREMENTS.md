@@ -151,6 +151,28 @@ Image requirements:
 
 **Status:** Pending.
 
+### P-1 — P1-004: Reconcile deployed Edge Function with the approved MCP tool contract
+
+**Observed in:** Deployed Supabase Edge Function `agent-tools` version 6 and feature branch `feature/chatgpt-native-agent-tools`.
+
+**Finding:** The deployed version exposes the earlier `generate` / `upload_image` workflow and writes upload metadata to `generated_images`. The feature branch implements the approved `list_products`, `get_product_details`, `generate`, `finalize_image`, and `save_post` workflow using `products` and `make_post`. The deployed source therefore does not yet match the approved architecture.
+
+**Requirements:**
+- Keep the deployed version unchanged until P0 authentication and required CI checks are complete.
+- Prepare a deployment checklist that verifies the five expected MCP tools and their schemas.
+- Verify the deployed function reads/writes the intended tables and Storage buckets.
+- Verify authentication, image finalization, logo overlay, and post persistence after an explicitly approved deployment.
+- Do not deploy or migrate production without explicit user authorization.
+
+**Acceptance criteria:**
+- Deployed MCP tool list matches the approved five-tool contract.
+- `finalize_image` uploads a 1080 × 1350 PNG with the original logo overlay.
+- `save_post` persists metadata in `public.make_post`.
+- No unintended writes occur in `public.generated_images`.
+- Deployment and post-deployment verification are documented.
+
+**Status:** Pending — deployed version 6 remains on the earlier workflow. No production deployment or invocation was performed.
+
 ### P-2 — P2-001: Maintain `updated_at` automatically
 
 **Finding:** The reviewed table migration defines `updated_at`, but no update trigger was included in that migration.
@@ -194,10 +216,11 @@ Image requirements:
 3. Implement P1-001 CI checks so subsequent changes are continuously validated.
 4. Complete P1-002 Storage and secret preflight checks.
 5. Implement P1-003 product seeding and catalog validation.
-6. Implement P2-001 timestamp triggers.
-7. Implement P2-002 image-processing tests and resource safeguards.
-8. Run end-to-end tests across all five MCP tools in an isolated, approved test environment.
-9. Review the complete diff and merge the feature implementation into `main` only after required checks pass.
+6. Reconcile and verify the deployed tool contract under P1-004 after explicit deployment approval.
+7. Implement P2-001 timestamp triggers.
+8. Implement P2-002 image-processing tests and resource safeguards.
+9. Run end-to-end tests across all five MCP tools in an isolated, approved test environment.
+10. Review the complete diff and merge the feature implementation into `main` only after required checks pass.
 
 ## 6. End-to-end acceptance checklist
 
