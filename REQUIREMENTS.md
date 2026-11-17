@@ -73,6 +73,27 @@ Image requirements:
 
 **Status:** In Progress — malformed `save_post` block repaired; validation extracted into a testable module. Deno type-check and 7 automated unit tests pass on the feature branch. Live Supabase/Edge Runtime integration tests remain pending.
 
+### P-0 — P0-002: Require authentication on the deployed `agent-tools` Edge Function
+
+**Observed in:** Supabase project `bkyqbbigfvfaobblxziu`, deployed Edge Function `agent-tools` version 6.
+
+**Finding:** The deployed function has `verify_jwt = false`. Its deployed source contains no `AGENT_TOOLS_BEARER_TOKEN` check or other request-authentication middleware before exposing MCP tools. The function uses server-side Supabase credentials and exposes an `upload_image` tool that writes to Storage and `generated_images`. This creates an unauthenticated write surface if the function URL is reachable.
+
+**Requirements:**
+- Require a high-entropy bearer token or enable a suitable JWT verification strategy before any MCP tool can be invoked.
+- Keep preflight `OPTIONS` handling separate from protected application routes; all non-preflight requests must be authenticated.
+- Never expose the service-role/secret key to callers.
+- Add automated tests proving missing, malformed, and incorrect credentials are rejected and valid credentials are accepted.
+- Verify the deployed function configuration and source after an explicitly approved deployment.
+
+**Acceptance criteria:**
+- Unauthenticated requests cannot invoke read or write tools.
+- Invalid bearer tokens receive an authorization failure.
+- Authenticated requests can invoke only the intended tools.
+- No privileged credential is returned to the caller or committed to source control.
+
+**Status:** Open — confirmed by read-only inspection of deployed version 6. The feature-branch source adds bearer-token middleware, but it is not deployed; no production invocation or deployment was performed during this audit.
+
 ### P-1 — P1-001: Add automated validation in CI
 
 **Finding:** No configured automated test workflow was confirmed during this audit.
@@ -108,7 +129,7 @@ Image requirements:
 - Missing prerequisites are detected before a user workflow fails midway.
 - No secret is stored in source control or exposed to client-side code.
 
-**Status:** Pending.
+**Status:** Partially verified — buckets `apple` and `image` are public and present, and `apple/logo.png` exists. The deployed function still lacks request authentication (tracked as P0-002); the bearer-token secret for the feature-branch implementation has not been verified.
 
 ### P-1 — P1-003: Seed and validate the product catalog
 
@@ -169,13 +190,14 @@ Image requirements:
 ## 5. Implementation sequence
 
 1. Fix P0-001 and prove the Edge Function compiles.
-2. Implement P1-001 CI checks so subsequent changes are continuously validated.
-3. Implement P1-002 Storage and secret preflight checks.
-4. Implement P1-003 product seeding and catalog validation.
-5. Implement P2-001 timestamp triggers.
-6. Implement P2-002 image-processing tests and resource safeguards.
-7. Run end-to-end tests across all five MCP tools.
-8. Review the complete diff and merge the feature implementation into `main` only after required checks pass.
+2. Fix P0-002 and verify authentication tests before any deployment.
+3. Implement P1-001 CI checks so subsequent changes are continuously validated.
+4. Complete P1-002 Storage and secret preflight checks.
+5. Implement P1-003 product seeding and catalog validation.
+6. Implement P2-001 timestamp triggers.
+7. Implement P2-002 image-processing tests and resource safeguards.
+8. Run end-to-end tests across all five MCP tools in an isolated, approved test environment.
+9. Review the complete diff and merge the feature implementation into `main` only after required checks pass.
 
 ## 6. End-to-end acceptance checklist
 
@@ -201,4 +223,4 @@ Image requirements:
 
 ## 8. Audit limitations
 
-This audit was based on repository metadata, branch comparison, the reviewed Edge Function source, migration files, and README/configuration content available during the review. No live Supabase database inspection, deployed-function verification, or local Deno execution was performed as part of this audit. Items requiring runtime confirmation must remain pending until tested.
+This audit includes repository and branch inspection, GitHub Actions results, read-only Supabase SQL metadata queries, Storage bucket/object metadata, and read-only inspection of deployed Edge Function version 6. No production writes, Storage uploads/deletes, Edge Function invocations, deployments, or local Deno execution were performed. Supabase Development Branch creation was not attempted further because the user declined any cost-bearing operation. Runtime behavior requiring writes remains unverified.
